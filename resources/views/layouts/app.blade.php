@@ -19,19 +19,40 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url('/') }}">
+            <a class="navbar-brand fw-bold" href="#">
                 <i class="fa-solid fa-car-side"></i> AutoMarket
             </a>
             
             @auth
                 <div class="d-flex align-items-center">
-                    <span class="text-light me-3">
+                    <span class="text-light me-4">
                         <i class="fa-solid fa-user-circle"></i> {{ auth()->user()->name }} 
                         <span class="badge bg-secondary text-uppercase">{{ auth()->user()->role }}</span>
                     </span>
-                    <form action="{{ route('logout') }}" method="POST" class="d-flex">
+                    
+                    {{-- NEW: Dynamic Dashboard/Home Button --}}
+                    @if(auth()->user()->role === 'admin')
+                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-light btn-sm fw-bold me-2">
+                            <i class="fa-solid fa-house-chimney"></i> Dashboard
+                        </a>
+                    @elseif(auth()->user()->role === 'hr')
+                        <a href="{{ route('hr.dashboard') }}" class="btn btn-outline-light btn-sm fw-bold me-2">
+                            <i class="fa-solid fa-house-chimney"></i> Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm fw-bold me-2">
+                            <i class="fa-solid fa-house-chimney"></i> Home
+                        </a>
+                    @endif
+
+                    {{-- Profile Button --}}
+                    <a href="{{ route('profile') }}" class="btn btn-outline-info btn-sm fw-bold me-3">
+                        <i class="fa-solid fa-id-badge"></i> Profile
+                    </a>
+
+                    <form action="{{ route('logout') }}" method="POST" class="d-flex m-0">
                         @csrf
-                        <button class="btn btn-outline-light btn-sm fw-bold">
+                        <button class="btn btn-danger btn-sm fw-bold">
                             <i class="fa-solid fa-sign-out-alt"></i> Logout
                         </button>
                     </form>
@@ -40,7 +61,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container pb-5">
         @if(session('success')) 
             <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
                 <i class="fa-solid fa-circle-check"></i> {{ session('success') }}

@@ -32,15 +32,12 @@ class AdminController extends Controller
 
         $data = $request->all();
 
-        // Handle Image Upload to public/assets
         if ($request->hasFile('image')) {
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('assets'), $imageName);
             $data['image'] = 'assets/'.$imageName;
         }
 
-        // Process Extra Questions (Text type)
-        // Expecting an array from the frontend: ['question1', 'question2']
         if ($request->has('extra_questions')) {
             $data['extra_questions'] = array_filter($request->extra_questions);
         } else {
@@ -49,6 +46,39 @@ class AdminController extends Controller
 
         Package::create($data);
         return back()->with('success', 'Sales Category Package created successfully!');
+    }
+
+    public function updatePackage(Request $request, Package $package)
+    {
+        $data = $request->except(['_token', '_method', 'image', 'extra_questions']);
+
+        if ($request->hasFile('image')) {
+            if ($package->image && file_exists(public_path($package->image))) {
+                unlink(public_path($package->image));
+            }
+            $imageName = time().'.'.$request->image->extension();
+            $request->image->move(public_path('assets'), $imageName);
+            $data['image'] = 'assets/'.$imageName;
+        }
+
+        if ($request->has('extra_questions')) {
+            $data['extra_questions'] = array_filter($request->extra_questions);
+        } else {
+            $data['extra_questions'] = [];
+        }
+
+        $package->update($data);
+        return back()->with('success', 'Package updated successfully!');
+    }
+
+    public function deletePackage(Package $package)
+    {
+        if ($package->image && file_exists(public_path($package->image))) {
+            unlink(public_path($package->image));
+        }
+
+        $package->delete();
+        return back()->with('success', 'Sales Category Package has been permanently deleted!');
     }
 
     public function handleUser(User $user, $action)
@@ -61,16 +91,5 @@ class AdminController extends Controller
     {
         $ad->update(['status' => $action]);
         return back()->with('success', "Advertisement has been {$action}.");
-    }
-    // Add this to AdminController.php
-    public function deletePackage(Package $package)
-    {
-        // Optional: If you want to delete the image from the public folder too
-        if ($package->image && file_exists(public_path($package->image))) {
-            unlink(public_path($package->image));
-        }
-
-        $package->delete();
-        return back()->with('success', 'Sales Category Package has been permanently deleted!');
     }
 }
