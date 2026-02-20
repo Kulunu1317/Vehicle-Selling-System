@@ -16,11 +16,13 @@ class HomeController extends Controller
             ->join('packages', 'hr_packages.package_id', '=', 'packages.id')
             ->select('advertisements.*', 'packages.tier as package_tier');
 
-        // Search Logic: ONLY for Vehicle Owners
+        // Search Logic: For Vehicle Owners (Category OR Brand)
         if (Auth::user()->role === 'owner' && $request->has('search')) {
             $searchTerm = $request->search;
-            // Searching inside the JSON column for Vehicle Category Type (Road, Sea, Sky)
-            $query->whereJsonContains('vehicle_data->Vehicle_Category', $searchTerm);
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('advertisements.vehicle_data->Vehicle_Category', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('advertisements.vehicle_data->Vehicle_Brand', 'LIKE', "%{$searchTerm}%");
+            });
         }
 
         // Order by Tier: Diamond > Gold > Silver > Normal
@@ -45,6 +47,6 @@ class HomeController extends Controller
             'message' => $request->message,
         ]);
 
-        return back()->with('success', 'Your details have been sent to the Sales Company HR!');
+        return back()->with('success', 'Your details have been sent to the Sales Company HR successfully!');
     }
 }

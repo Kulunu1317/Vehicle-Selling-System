@@ -19,7 +19,7 @@
         <div class="tab-content">
             {{-- Pending Users Tab --}}
             <div class="tab-pane fade show active" id="users">
-                <div class="card p-3">
+                <div class="card p-3 shadow-sm border-0">
                     <h4>Registration Requests</h4>
                     <table class="table table-bordered mt-3">
                         <thead class="table-dark">
@@ -50,7 +50,7 @@
 
             {{-- Pending Ads Tab --}}
             <div class="tab-pane fade" id="ads">
-                <div class="card p-3">
+                <div class="card p-3 shadow-sm border-0">
                     <h4>Advertisement Approvals</h4>
                     <table class="table table-bordered mt-3">
                         <thead class="table-dark">
@@ -81,7 +81,7 @@
 
             {{-- Create Package Tab (Dynamic Form Builder) --}}
             <div class="tab-pane fade" id="create-package">
-                <div class="card p-4">
+                <div class="card p-4 shadow-sm border-0">
                     <h4>Create Sales Category Package</h4>
                     <form action="{{ route('admin.package.create') }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -116,14 +116,13 @@
                 </div>
             </div>
 
-            {{-- Active Packages Tab (UPDATED WITH IMAGE & DELETE) --}}
+            {{-- Active Packages Tab (WITH EDIT & DELETE) --}}
             <div class="tab-pane fade" id="active-packages">
                 <div class="row">
-                    @foreach($activePackages as $pkg)
-                    <div class="col-md-4 mb-3">
-                        <div class="card tier-{{ $pkg->tier }} h-100">
+                    @forelse($activePackages as $pkg)
+                    <div class="col-md-4 mb-4">
+                        <div class="card tier-{{ $pkg->tier }} h-100 shadow-sm">
                             
-                            {{-- NEW: Package Image --}}
                             @if($pkg->image)
                                 <img src="{{ asset($pkg->image) }}" class="card-img-top" alt="{{ $pkg->name }}" style="height: 180px; object-fit: cover;">
                             @else
@@ -138,26 +137,73 @@
                                 <h6>Required Fields:</h6>
                                 <ul>
                                     <li>Vehicle Brand</li><li>Vehicle Category</li><li>Price & Location</li><li>Vehicle Image</li>
-                                    {{-- Safety Check for Extra Questions --}}
                                     @if(!empty($pkg->extra_questions))
                                         @foreach($pkg->extra_questions as $q)
-                                            <li>{{ $q }}</li>
+                                            <li>{{ $q }} <span class="badge bg-info text-dark">Custom</span></li>
                                         @endforeach
                                     @endif
                                 </ul>
                             </div>
 
-                            {{-- NEW: Delete Button --}}
-                            <div class="card-footer bg-white border-top-0 pb-3">
-                                <form action="{{ route('admin.package.delete', $pkg->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to completely delete this package?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="fa-solid fa-trash-can"></i> Delete Package</button>
+                            {{-- Action Buttons --}}
+                            <div class="card-footer bg-white border-top-0 pb-3 d-flex gap-2">
+                                <button type="button" class="btn btn-outline-warning btn-sm w-50" data-bs-toggle="modal" data-bs-target="#editPackageModal{{ $pkg->id }}">
+                                    <i class="fa-solid fa-pen"></i> Edit
+                                </button>
+                                
+                                <form action="{{ route('admin.package.delete', $pkg->id) }}" method="POST" class="w-50" onsubmit="return confirm('Are you sure you want to completely delete this package?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="fa-solid fa-trash-can"></i> Delete</button>
                                 </form>
                             </div>
+
+                            {{-- Dynamic Edit Package Modal --}}
+                            <div class="modal fade" id="editPackageModal{{ $pkg->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <form action="{{ route('admin.package.update', $pkg->id) }}" method="POST" enctype="multipart/form-data">
+                                            @csrf @method('PUT')
+                                            <div class="modal-header bg-warning">
+                                                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square"></i> Edit Package</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2"><label class="fw-bold">Name</label><input type="text" name="name" class="form-control" value="{{ $pkg->name }}" required></div>
+                                                    <div class="col-md-6 mb-2"><label class="fw-bold">Max Ads</label><input type="number" name="max_ads" class="form-control" value="{{ $pkg->max_ads }}" required></div>
+                                                    <div class="col-md-6 mb-2"><label class="fw-bold">Price ($)</label><input type="number" step="0.01" name="price" class="form-control" value="{{ $pkg->price }}" required></div>
+                                                    <div class="col-md-6 mb-2"><label class="fw-bold">New Image (Leave blank to keep current)</label><input type="file" name="image" class="form-control" accept="image/*"></div>
+                                                </div>
+                                                <hr>
+                                                <h6><i class="fa-solid fa-list-check"></i> Form Structure (Extra Questions)</h6>
+                                                <div id="edit-questions-container-{{ $pkg->id }}">
+                                                    @if($pkg->extra_questions)
+                                                        @foreach($pkg->extra_questions as $q)
+                                                            <div class="input-group mb-2">
+                                                                <input type="text" name="extra_questions[]" class="form-control" value="{{ $q }}" required>
+                                                                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+                                                            </div>
+                                                        @endforeach
+                                                    @endif
+                                                </div>
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="addEditQuestion({{ $pkg->id }})">+ Add Form Field</button>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-success fw-bold">Update Package</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
-                    @endforeach
+                    @empty
+                    <div class="col-12 text-center py-5">
+                        <h5 class="text-muted"><i class="fa-solid fa-folder-open"></i> No Active Packages found. Go to "Create Package" to make one!</h5>
+                    </div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -171,6 +217,17 @@
         div.className = 'input-group mb-2';
         div.innerHTML = `
             <input type="text" name="extra_questions[]" class="form-control" placeholder="Enter custom question (e.g., Mileage, Engine Capacity)">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+        `;
+        container.appendChild(div);
+    }
+
+    function addEditQuestion(pkgId) {
+        const container = document.getElementById('edit-questions-container-' + pkgId);
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" name="extra_questions[]" class="form-control" placeholder="New Field">
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
         `;
         container.appendChild(div);

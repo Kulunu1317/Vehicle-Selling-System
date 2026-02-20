@@ -9,7 +9,7 @@
         <div class="col-md-6">
             <h4 class="mb-3"><i class="fa-solid fa-cart-plus"></i> Buy Packages</h4>
             @forelse($packages as $pkg)
-            <div class="card mb-3 shadow-sm tier-{{ $pkg->tier }}">
+            <div class="card mb-4 shadow-sm tier-{{ $pkg->tier }}">
                 <div class="row g-0">
                     <div class="col-md-4">
                         @if($pkg->image)
@@ -21,21 +21,57 @@
                         @endif
                     </div>
                     <div class="col-md-8">
-                        <div class="card-body">
+                        <div class="card-body pb-2">
                             <h5 class="card-title">{{ $pkg->name }} <span class="badge bg-secondary text-uppercase">{{ $pkg->tier }}</span></h5>
                             <p class="card-text mb-1"><small class="text-muted">Allows {{ $pkg->max_ads }} Ads | Expires in {{ $pkg->expiry_time }} {{ $pkg->expiry_unit }}</small></p>
                             <h6 class="text-success fw-bold">${{ $pkg->price }}</h6>
                             
                             <form action="{{ route('hr.buy', $pkg->id) }}" method="POST" class="mt-2">
                                 @csrf
-                                <button class="btn btn-primary btn-sm"><i class="fa-solid fa-cart-shopping"></i> Buy Package</button>
+                                <button class="btn btn-primary btn-sm w-100 fw-bold mb-2"><i class="fa-solid fa-cart-shopping"></i> Buy Package</button>
                             </form>
+
+                            {{-- View Form Structure Button --}}
+                            <button class="btn btn-outline-info btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#viewForm{{ $pkg->id }}">
+                                <i class="fa-solid fa-eye"></i> View Form Structure
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- View Form Structure Modal --}}
+            <div class="modal fade" id="viewForm{{ $pkg->id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content border-info">
+                        <div class="modal-header bg-info text-dark">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-list-check"></i> Form Structure Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body bg-light">
+                            <p class="text-muted small mb-3">This is the exact form structure you will be required to fill out if you buy this package to place an advertisement.</p>
+                            
+                            <div class="card p-3 shadow-sm border-0">
+                                <label class="fw-bold small mb-1">Vehicle Brand</label> <input class="form-control mb-2" disabled placeholder="Standard Field">
+                                <label class="fw-bold small mb-1">Category (Road, Sea, Sky)</label> <input class="form-control mb-2" disabled placeholder="Standard Field">
+                                <label class="fw-bold small mb-1">Price</label> <input class="form-control mb-2" disabled placeholder="Standard Field">
+                                <label class="fw-bold small mb-1">Location</label> <input class="form-control mb-2" disabled placeholder="Standard Field">
+                                <label class="fw-bold small mb-1">Vehicle Image</label> <input type="file" class="form-control mb-3" disabled>
+                                
+                                @if(!empty($pkg->extra_questions))
+                                    <hr>
+                                    <h6 class="text-primary fw-bold mb-3"><i class="fa-solid fa-star"></i> Custom Required Fields</h6>
+                                    @foreach($pkg->extra_questions as $q)
+                                        <label class="fw-bold small mb-1">{{ $q }}</label> <input class="form-control mb-2 border-primary" disabled placeholder="Custom Admin Field">
+                                    @endforeach
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             @empty
-            <div class="alert alert-secondary">No packages are currently available from the Admin.</div>
+            <div class="alert alert-secondary shadow-sm"><i class="fa-solid fa-folder-open"></i> No packages are currently available from the Admin.</div>
             @endforelse
         </div>
 
